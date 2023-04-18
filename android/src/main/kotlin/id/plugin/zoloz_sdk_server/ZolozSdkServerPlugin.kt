@@ -39,7 +39,14 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         if (call.method == "startZoloz") {
-            startZoloz(result)
+           try {
+             startZoloz(result)
+           }
+           catch(Exception e) {
+             zolozInitServer.stop()
+             zolozCheckServer.stop()
+             startZoloz(result)
+           }
         } else {
             result.notImplemented()
         }
