@@ -16,6 +16,8 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import ru.skornei.restserver.RestServerManager
+import java.io.File
+import java.io.IOException
 
 
 /** ZolozSdkServerPlugin */
@@ -41,7 +43,8 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         if (call.method == "startZoloz") {
             zolozInitServer.start()
             zolozCheckServer.start()
-             startZoloz(result)          
+            startZoloz(result)
+
         } else {
             result.notImplemented()
         }
@@ -57,6 +60,7 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     private fun startZoloz(@NonNull result: Result) {
+        val uIConfig =  getFileFromAssets( ).path
         runOnIoThread {
             val initRequest: String? = initRequest()
             val initResponse = JSON.parseObject(initRequest, InitResponse::class.java)
@@ -65,7 +69,8 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             request.zlzConfig = initResponse.clientCfg
             request.bizConfig[ZLZConstants.CONTEXT] = activity
             request.bizConfig[ZLZConstants.PUBLIC_KEY] = initResponse.rsaPubKey
-            request.bizConfig[ZLZConstants.LOCALE] = "en-US"
+            request.bizConfig[ZLZConstants.LOCALE] = "in-ID"
+            request.bizConfig[ZLZConstants.CHAMELEON_CONFIG_PATH] = uIConfig
             mHandler!!.postAtFrontOfQueue {
                 zlzFacade.start(request, object : IZLZCallback {
                     override fun onCompleted(response: ZLZResponse) {
@@ -121,5 +126,18 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     override fun onDetachedFromActivity() {
+
     }
+
+    @Throws(IOException::class)
+    private fun getFileFromAssets(): File = File(context.cacheDir, "UIConfig.zip")
+        .also {
+            if (!it.exists()) {
+                it.outputStream().use { cache ->
+                    activity.assets.open("UIConfig.zip").use { inputStream ->
+                        inputStream.copyTo(cache)
+                    }
+                }
+            }
+        }
 }
