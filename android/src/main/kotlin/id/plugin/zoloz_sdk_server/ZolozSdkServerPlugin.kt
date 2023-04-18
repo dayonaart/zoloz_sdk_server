@@ -39,6 +39,8 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         if (call.method == "startZoloz") {
+            zolozInitServer.start()
+            zolozCheckServer.start()
              startZoloz(result)          
         } else {
             result.notImplemented()
@@ -76,10 +78,10 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     }
 
                     override fun onInterrupted(response: ZLZResponse) {
-                        val callback = JSONObject()
-                        callback["ret_code"] = response.retCode
-                        callback["ext_info"] = response.extInfo
-                        result.success(callback)
+                        val initCheck = initCheck("$time", initResponse.transactionId)
+                        zolozInitServer.stop()
+                        zolozCheckServer.stop()
+                        result.success(initCheck)
                     }
                 })
             }
@@ -109,8 +111,7 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
         RestServerManager.initialize(binding.activity.application)
-        zolozInitServer.start()
-        zolozCheckServer.start()
+
 
     }
 
