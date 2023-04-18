@@ -39,7 +39,6 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         if (call.method == "startZoloz") {
-            zolozInitServer.start()
             startZoloz(result)
         } else {
             result.notImplemented()
@@ -68,11 +67,8 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             mHandler!!.postAtFrontOfQueue {
                 zlzFacade.start(request, object : IZLZCallback {
                     override fun onCompleted(response: ZLZResponse) {
-                        zolozInitServer.stop()
-                        zolozCheckServer.start()
                         runOnIoThread {
                             val initCheck = initCheck("$time", initResponse.transactionId)
-                            zolozCheckServer.stop()
                             result.success(initCheck)
                         }
                     }
@@ -111,6 +107,9 @@ class ZolozSdkServerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
         RestServerManager.initialize(binding.activity.application)
+        zolozInitServer.start()
+        zolozCheckServer.start()
+
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
